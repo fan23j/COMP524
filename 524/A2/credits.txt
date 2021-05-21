@@ -1,0 +1,10 @@
+#lang racket
+https://www.regular-expressions.info/floatingpoint.html
+
+https://www.regular-expressions.info/floatingpoint.html
+
+https://stackoverflow.com/questions/12340503/im-trying-to-write-a-function-in-racket-delete-all-xx-elt-which-returns-a-new
+
+https://stackoverflow.com/questions/55402687/replacing-a-string-in-a-list-in-racket
+
+https://stackoverflow.com/questions/40119385/racket-error-in-string-replace-function

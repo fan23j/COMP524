@@ -1,0 +1,117 @@
+
+#lang racket
+
+(require "parse.rkt")
+
+;; program     := exprList
+;; exprList    := expr optExprList
+;; optExprList := ɛ | exprList
+;; expr        := atom | invocation | let | define | lambda
+;; let         := LET OPAREN NAME expr CPAREN expr
+;; define      := DEFINE NAME expr
+;; lambda      := LAMBDA OPAREN NAME CPAREN expr
+;; atom        := NAME | STRING | number
+;; number      := INT | FLOAT
+;; invocation  := OPAREN exprList CPAREN
+
+(define (eval source)
+  ;; program     := exprList
+  (let ([input (parse source)])
+    (last (eval-exprList (second input) (new-environment)))))
+
+(define (eval-exprList exprList-expr env)
+  ;; exprList    := expr optExprList
+  (let* ([label (first exprList-expr)]
+         [expr (eval-expr (second exprList-expr) env)]
+         [opt (third exprList-expr)])
+    (if (equal? (first (second(second (second exprList-expr)))) 'DEFINE)
+        (eval-optExprList (eval-expr (rest exprList-expr) env) opt (add-binding env (second (third (second (second exprList-expr)))) (eval-expr (fourth (second (second exprList-expr))) env)))
+        (eval-optExprList expr opt env))))
+
+(define (eval-optExprList expr opt env)
+  ;; optExprList := ɛ | exprList
+  (if (= 1 (length opt))
+      (list expr)
+      (cons expr (eval-exprList (second opt) env))))
+
+(define (eval-number number-expr env)
+  ;; number      := INT | FLOAT
+  (let* ([child (second number-expr)]
+         [child-label (first child)])
+   (second child)))
+
+(define (eval-atom atom-expr env)
+  ;; atom        := NAME | STRING | number
+  (let* ([child (second atom-expr)]
+         [child-label (first child)])
+    (cond
+      [(equal? child-label 'number) (eval-number child env)]
+      [(equal? child-label 'NAME) (eval-name child env)]
+      [else (second child)])))
+
+(define (eval-name name-expr env)
+  (cond
+    [(equal? (second name-expr) '+) +]
+    [(equal? (second name-expr) '-) -]
+    [(equal? (second name-expr) '*) *]
+    [(equal? (second name-expr) '/) /]
+    [(equal? (second name-expr) '=) =]
+    [(equal? (second name-expr) '<) <]
+    [(equal? (second name-expr) 'not) not]
+    [(equal? (second name-expr) 'string=?) string=?]
+    [(equal? (second name-expr) 'string<?) string<?]
+    [(equal? (second name-expr) 'string-append) string-append]
+    [(equal? (second name-expr) 'and) and-l]
+    [(equal? (second name-expr) 'or) or-l]
+    [else (lookup-name env (second name-expr))]))
+
+(define or-l (lambda x 
+    (if (null? x)
+        #f
+        (if (car x) (apply or-l (cdr x)) #t))))
+
+(define and-l (lambda x 
+    (if (null? x)
+        #t
+        (if (car x) (apply and-l (cdr x)) #f))))
+
+(define (eval-expr expr-expr env)
+  ;; expr        := atom | invocation
+  (let* ([child (second expr-expr)]
+         [child-label (first child)])
+    (cond
+      [(equal? child-label 'atom) (eval-atom child env)]
+      [(equal? child-label 'let) (eval-let (rest expr-expr) env)]
+      [(equal? child-label 'define) (eval-define (rest expr-expr) env)]
+      [(equal? child-label 'lambda) (eval-lambda (rest expr-expr) env)]
+      [else (eval-invocation child env)])))
+
+(define (eval-invocation invocation-expr env)
+  ;; invocation  := OPAREN exprList CPAREN
+  (let* ([label (first invocation-expr)]
+         [oparen (second invocation-expr)]
+         [exprList (third invocation-expr)]
+         [cparen (fourth invocation-expr)]
+         [proc (second exprList)])
+    (apply (first (eval-exprList exprList env)) (rest (eval-exprList exprList env)))))
+
+(define (eval-let let-expr env)
+  (let* ([binding (fifth (first let-expr))]
+         [name (second (fourth (first let-expr)))]
+         [value (seventh (first let-expr))])
+    (eval-expr value
+               (add-binding env name
+                 (eval-expr binding env)))))
+
+(define (eval-define define-expr env)
+  ;; define := DEFINE NAME expr
+  (let* ([name (second(third(first define-expr)))]
+         [value (fourth(first define-expr))])
+    (eval-expr value
+               (add-binding env name
+                         (eval-expr value env)))))
+
+(define (eval-lambda)(list))
+(define new-environment hash)
+(define add-binding hash-set)
+(define lookup-name hash-ref)

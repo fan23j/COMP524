@@ -1,0 +1,1 @@
+https://stackoverflow.com/questions/387775/using-and-with-the-apply-function-in-scheme

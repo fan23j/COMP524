@@ -1,0 +1,1 @@
+("7.9" racket ("2ed305b537edd1429efec46d787b01bfdc31d07c" . "3e1d341b6ed4b06ff967f7f0d0bdb5cc3ad2151e") #"/Users/fan23j/Documents/524/A7/lex.rkt" (collects #"errortrace" #"errortrace-key.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt") (collects #"rackunit" #"main.rkt"))
